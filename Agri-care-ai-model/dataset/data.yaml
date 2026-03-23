@@ -1,0 +1,14 @@
+path: /content/drive/MyDrive/AgriCare/agri_care_yolo_model/tomato-dataset
+
+train: train/images
+val: test/images
+
+nc: 6
+
+names:
+  0: Tomato Bacterial Spot
+  1: Tomato Early Blight
+  2: Tomato Late Blight
+  3: Tomato Leaf Healthy
+  4: Tomato Leaf Mold
+  5: Tomato Septoria Leaf Spot
