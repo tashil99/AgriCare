@@ -33,7 +33,7 @@ model = YOLO(MODEL_PATH)
 # --------------------
 # Gemini API Key
 # --------------------
-API_KEY = "AIzaSyAs3d_buwwvstb4KkCw92as6e7fJw-ZESs"
+API_KEY = "AIzaSyDefjMwrVV1PVyEWjzJyPJqUo6fxx2HKLw"
 
 # --------------------
 # Caches (prevents repeated Gemini calls)
