@@ -3,8 +3,8 @@ class Results {
   final String diseaseName;
   final double confidence;
   final String recommendation;
-  final String symptoms;  
-  final String cause;      
+  final String symptoms;
+  final String cause;
   final String imageBase64;
   final DateTime createdAt;
 
@@ -21,14 +21,16 @@ class Results {
 
   factory Results.fromMap(Map<String, dynamic> map) {
     return Results(
-      cropName: map['crop_name'],
-      diseaseName: map['disease_name'],
-      confidence: (map['confidence'] as num).toDouble(),
+      cropName: map['crop_name'] ?? "",
+      diseaseName: map['disease_name'] ?? "",
+      confidence: (map['confidence'] ?? 0).toDouble(),
       recommendation: map['recommendation'] ?? "",
-      symptoms: map['symptoms'] ?? "",  
-      cause: map['cause'] ?? "",         
+      symptoms: map['symptoms'] ?? "",
+      cause: map['cause'] ?? "",
       imageBase64: map['image_base64'] ?? "",
-      createdAt: DateTime.parse(map['created_at']),
+      createdAt: map['created_at'] != null
+          ? DateTime.tryParse(map['created_at']) ?? DateTime.now()
+          : DateTime.now(),
     );
   }
 }

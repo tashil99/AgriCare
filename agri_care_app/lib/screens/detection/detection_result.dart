@@ -158,20 +158,30 @@ class ResultScreen extends StatelessWidget {
                 ),
                 onPressed: () async {
 
-                  /// ✅ ALWAYS SAVE (FIXED)
                   await detectionService.saveDetection(
                     cropName: "Tomato",
-                    diseaseName: result.className,
+                    diseaseName: result.className.trim(),
                     confidence: result.confidence,
-                    recommendation: result.recommendation,
-                    symptoms: result.symptoms,
-                    cause: result.cause,
+
+            
+                    recommendation: result.recommendation.trim().isNotEmpty == true
+                        ? result.recommendation.trim()
+                        : "No treatment available.",
+
+                    symptoms: result.symptoms.trim().isNotEmpty == true
+                        ? result.symptoms.trim()
+                        : "No symptoms available.",
+
+                    cause: result.cause.trim().isNotEmpty == true
+                        ? result.cause.trim()
+                        : "No cause information available.",
+
                     imagePath: imageFile.path,
                   );
 
                   if (isHealthy) {
 
-                    /// ✅ SUCCESS DIALOG
+                    /// SUCCESS DIALOG
                     showDialog(
                       context: context,
                       builder: (_) => AlertDialog(
@@ -194,7 +204,7 @@ class ResultScreen extends StatelessWidget {
 
                   } else {
 
-                    /// ✅ GO TO TREATMENT
+                    /// GO TO TREATMENT
                     Navigator.push(
                       context,
                       MaterialPageRoute(

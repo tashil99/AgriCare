@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'dart:convert';
-
 import '../theme/app_theme.dart';
 import '../entities/results.dart';
 
@@ -93,7 +92,6 @@ class DetectionCard extends StatelessWidget {
 
                     const SizedBox(height: 10),
 
-                    /// 🔥 LABEL
                     Text(
                       "Detection accuracy",
                       style: theme.textTheme.bodyMedium,
@@ -101,7 +99,6 @@ class DetectionCard extends StatelessWidget {
 
                     const SizedBox(height: 6),
 
-                    /// 🔥 PROGRESS BAR + %
                     Row(
                       children: [
 
@@ -135,7 +132,6 @@ class DetectionCard extends StatelessWidget {
 
                     const SizedBox(height: 8),
 
-                    /// 🔥 STATUS BADGE
                     Container(
                       padding: const EdgeInsets.symmetric(
                         horizontal: 10,
@@ -160,7 +156,6 @@ class DetectionCard extends StatelessWidget {
 
               const SizedBox(width: 8),
 
-              /// ➡ ARROW
               Icon(
                 Icons.arrow_forward_ios_rounded,
                 size: 18,

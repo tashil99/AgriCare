@@ -237,7 +237,6 @@ class _HistoryScreenState extends State<HistoryScreen> {
     );
   }
 
-  /// 🔥 UPDATED CHIP (NO ICON + ROUNDER)
   Widget _chip(String label) {
     final isSelected = selectedFilter == label;
 
@@ -266,7 +265,7 @@ class _HistoryScreenState extends State<HistoryScreen> {
                   ? AppTheme.primarySoft
                   : AppTheme.surface,
 
-              /// 🔥 MORE ROUNDED (PILL SHAPE)
+
               borderRadius: BorderRadius.circular(30),
 
               boxShadow: [

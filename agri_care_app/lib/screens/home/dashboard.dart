@@ -3,12 +3,12 @@ import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:lottie/lottie.dart';
 
 import '../../theme/app_theme.dart';
 import '../../entities/results.dart';
 import '../../services/api_service.dart';
+import '../../services/detection_service.dart';
 import '../../widgets/detection_card.dart';
 import '../../widgets/error_dialog.dart';
 import '../../widgets/loader.dart';
@@ -16,10 +16,14 @@ import '../../utils/error_handler.dart';
 import '../detection/detection_detail.dart';
 import '../detection/detection_result.dart';
 import '../detection/scanning.dart';
-import 'history.dart';
 
 class DashboardScreen extends StatefulWidget {
-  const DashboardScreen({super.key});
+  final Function(int)? onNavigate; // ✅ ADDED
+
+  const DashboardScreen({
+    super.key,
+    this.onNavigate,
+  });
 
   @override
   State<DashboardScreen> createState() => _DashboardScreenState();
@@ -28,24 +32,14 @@ class DashboardScreen extends StatefulWidget {
 class _DashboardScreenState extends State<DashboardScreen> {
   final ImagePicker _picker = ImagePicker();
   final ApiService _apiService = ApiService();
-  final supabase = Supabase.instance.client;
+  final DetectionService _service = DetectionService();
 
   late Future<List<Results>> _detectionsFuture;
 
   @override
   void initState() {
     super.initState();
-    _detectionsFuture = fetchDetections();
-  }
-
-  Future<List<Results>> fetchDetections() async {
-    final response = await supabase
-        .from('detections')
-        .select()
-        .order('created_at', ascending: false);
-
-    final data = List<Map<String, dynamic>>.from(response);
-    return data.map((e) => Results.fromMap(e)).toList();
+    _detectionsFuture = _service.fetchDetections();
   }
 
   /// IMAGE PICKER
@@ -92,7 +86,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
     try {
       final detections = await _apiService
           .analyzeImage(file)
-          .timeout(const Duration(seconds: 15));
+          .timeout(const Duration(seconds: 45));
 
       if (!mounted) return;
 
@@ -106,9 +100,11 @@ class _DashboardScreenState extends State<DashboardScreen> {
         ),
       );
 
+      /// 🔥 REFRESH DATA
       setState(() {
-        _detectionsFuture = fetchDetections();
+        _detectionsFuture = _service.fetchDetections();
       });
+
     } on TimeoutException {
       Navigator.pop(context);
       ErrorDialog.show(context, "Detection timeout. Try again.");
@@ -136,7 +132,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
             color: AppTheme.primary,
             onRefresh: () async {
               setState(() {
-                _detectionsFuture = fetchDetections();
+                _detectionsFuture = _service.fetchDetections();
               });
             },
             child: ListView(
@@ -188,14 +184,11 @@ class _DashboardScreenState extends State<DashboardScreen> {
                   children: [
                     Text("Recent detections",
                         style: theme.textTheme.titleLarge),
+
+                    /// ✅ FIXED NAVIGATION
                     TextButton(
                       onPressed: () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (_) => const HistoryScreen(),
-                          ),
-                        );
+                        widget.onNavigate?.call(1); // 👈 SWITCH TAB
                       },
                       child: const Text("See full history"),
                     ),
@@ -323,11 +316,11 @@ class _DashboardScreenState extends State<DashboardScreen> {
               icon: const Icon(Icons.camera_alt, size: 20),
               label: const Text("Take a picture"),
               style: ElevatedButton.styleFrom(
-              shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(16),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(16),
+                ),
+              ),
             ),
-          ),
-        ),
           ),
         ],
       ),

@@ -15,10 +15,14 @@ class HomeScreen extends StatefulWidget {
 class _HomeScreenState extends State<HomeScreen> {
   int _currentIndex = 0;
 
-  final List<Widget> _screens = const [
-    DashboardScreen(),
-    HistoryScreen(),
-    ProfileScreen(),
+  void changeTab(int index) {
+    setState(() => _currentIndex = index);
+  }
+
+  late final List<Widget> _screens = [
+    DashboardScreen(onNavigate: changeTab),
+    const HistoryScreen(),
+    const ProfileScreen(),
   ];
 
   @override
@@ -27,37 +31,39 @@ class _HomeScreenState extends State<HomeScreen> {
       backgroundColor: AppTheme.bg,
 
       body: SafeArea(
-        bottom: false,
         child: _screens[_currentIndex],
       ),
 
-      bottomNavigationBar: SafeArea(
-        top: false,
-        child: NavigationBar(
-          selectedIndex: _currentIndex,
-          onDestinationSelected: (index) {
-            setState(() => _currentIndex = index);
-          },
+      bottomNavigationBar: NavigationBar(
+        height: 70,
+        backgroundColor: Colors.white,
+        elevation: 3,
 
-    
-          destinations: const [
-            NavigationDestination(
-              icon: Icon(Icons.home_outlined),
-              selectedIcon: Icon(Icons.home),
-              label: 'Home',
-            ),
-            NavigationDestination(
-              icon: Icon(Icons.history_outlined),
-              selectedIcon: Icon(Icons.history),
-              label: 'History',
-            ),
-            NavigationDestination(
-              icon: Icon(Icons.person_outline),
-              selectedIcon: Icon(Icons.person),
-              label: 'Profile',
-            ),
-          ],
-        ),
+        selectedIndex: _currentIndex,
+
+        onDestinationSelected: (index) {
+          setState(() => _currentIndex = index);
+        },
+
+        labelBehavior: NavigationDestinationLabelBehavior.alwaysShow,
+
+        destinations: const [
+          NavigationDestination(
+            icon: Icon(Icons.home_outlined),
+            selectedIcon: Icon(Icons.home),
+            label: 'Home',
+          ),
+          NavigationDestination(
+            icon: Icon(Icons.history_outlined),
+            selectedIcon: Icon(Icons.history),
+            label: 'History',
+          ),
+          NavigationDestination(
+            icon: Icon(Icons.person_outline),
+            selectedIcon: Icon(Icons.person),
+            label: 'Profile',
+          ),
+        ],
       ),
     );
   }

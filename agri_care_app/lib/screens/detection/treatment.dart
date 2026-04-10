@@ -1,18 +1,16 @@
+import 'dart:convert';
 import 'dart:io';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
-import 'package:pdf/widgets.dart' as pw;
-import 'package:pdf/pdf.dart';
-import 'package:path_provider/path_provider.dart';
-import 'package:share_plus/share_plus.dart';
-import 'package:open_filex/open_filex.dart';
+
 import '../../theme/app_theme.dart';
 import '../../entities/detections.dart';
+import '../../entities/results.dart';
 import '../../services/detection_service.dart';
+import '../../services/report_service.dart';
 import '../../widgets/error_dialog.dart';
 import '../../widgets/success_dialog.dart';
 
-class TreatmentScreen extends StatelessWidget {
+class TreatmentScreen extends StatefulWidget {
   final File imageFile;
   final Detections detection;
 
@@ -23,9 +21,52 @@ class TreatmentScreen extends StatelessWidget {
   });
 
   @override
-  Widget build(BuildContext context) {
-    final service = DetectionService();
+  State<TreatmentScreen> createState() => _TreatmentScreenState();
+}
 
+class _TreatmentScreenState extends State<TreatmentScreen> {
+  final DetectionService _service = DetectionService();
+  final ReportService _reportService = ReportService();
+
+  bool _isSaved = false;
+
+  Results _toResult() {
+    final imageBytes = widget.imageFile.readAsBytesSync();
+    final base64Image = base64Encode(imageBytes);
+
+    return Results(
+      cropName: "Tomato",
+      diseaseName: widget.detection.className,
+      confidence: widget.detection.confidence,
+      recommendation: widget.detection.recommendation,
+      symptoms: widget.detection.symptoms,
+      cause: widget.detection.cause,
+      imageBase64: base64Image,
+      createdAt: DateTime.now(),
+    );
+  }
+
+  /// 🔥 SAVE FUNCTION (REUSABLE)
+  Future<void> _saveDetectionIfNeeded() async {
+    if (_isSaved) return;
+
+    await _service.saveDetection(
+      cropName: "Tomato",
+      diseaseName: widget.detection.className,
+      confidence: widget.detection.confidence,
+      recommendation: widget.detection.recommendation,
+      symptoms: widget.detection.symptoms,
+      cause: widget.detection.cause,
+      imagePath: widget.imageFile.path,
+    );
+
+    setState(() {
+      _isSaved = true;
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppTheme.bg,
       appBar: AppBar(title: const Text("Treatment")),
@@ -37,14 +78,14 @@ class TreatmentScreen extends StatelessWidget {
             /// IMAGE
             ClipRRect(
               borderRadius: BorderRadius.circular(24),
-              child: Image.file(imageFile, height: 260, fit: BoxFit.cover),
+              child: Image.file(widget.imageFile, height: 260, fit: BoxFit.cover),
             ),
 
             const SizedBox(height: 20),
 
             /// DISEASE NAME
             Text(
-              detection.className,
+              widget.detection.className,
               style: Theme.of(context).textTheme.headlineMedium,
             ),
 
@@ -58,51 +99,42 @@ class TreatmentScreen extends StatelessWidget {
                 borderRadius: BorderRadius.circular(20),
               ),
               child: Text(
-                detection.recommendation,
+                widget.detection.recommendation,
                 style: const TextStyle(height: 1.6),
               ),
             ),
 
             const SizedBox(height: 30),
 
-            /// SAVE BUTTON
-            SizedBox(
-              height: 55,
-              child: ElevatedButton.icon(
-                icon: const Icon(Icons.save),
-                label: const Text("Save detection"),
-                onPressed: () async {
-                  try {
-                    await service.saveDetection(
-                      cropName: "Tomato",
-                      diseaseName: detection.className,
-                      confidence: detection.confidence,
-                      recommendation: detection.recommendation,
-                      symptoms: detection.symptoms,
-                      cause: detection.cause,
-                      imagePath: imageFile.path,
-                    );
+            /// ✅ SAVE BUTTON (ONLY IF NOT SAVED)
+            if (!_isSaved)
+              SizedBox(
+                height: 55,
+                child: ElevatedButton.icon(
+                  icon: const Icon(Icons.save),
+                  label: const Text("Save detection"),
+                  onPressed: () async {
+                    try {
+                      await _saveDetectionIfNeeded();
 
-                    SuccessDialog.show(
-                      context,
-                      "Detection saved successfully",
-                      onContinue: () {
-                        Navigator.popUntil(
-                            context, (route) => route.isFirst);
-                      },
-                    );
-                  } catch (e) {
-                    ErrorDialog.show(
-                      context,
-                      "Failed to save detection. Please try again.",
-                      onRetry: () {
-                        Navigator.pop(context);
-                      },
-                    );
-                  }
-                },
+                      SuccessDialog.show(
+                        context,
+                        "Detection saved successfully",
+                        onContinue: () {
+                          Navigator.popUntil(
+                              context, (route) => route.isFirst);
+                        },
+                      );
+
+                    } catch (e) {
+                      ErrorDialog.show(
+                        context,
+                        "Failed to save detection. Please try again.",
+                      );
+                    }
+                  },
+                ),
               ),
-            ),
 
             const SizedBox(height: 12),
 
@@ -117,13 +149,10 @@ class TreatmentScreen extends StatelessWidget {
                     label: const Text("Share"),
                     onPressed: () async {
                       try {
-                        final file = await _generatePdf();
-                        await Share.shareXFiles([XFile(file.path)]);
+                        await _saveDetectionIfNeeded(); // 🔥 AUTO SAVE
+                        await _reportService.shareReport(_toResult());
                       } catch (e) {
-                        ErrorDialog.show(
-                          context,
-                          "Failed to share report",
-                        );
+                        ErrorDialog.show(context, "Failed to share report");
                       }
                     },
                   ),
@@ -131,12 +160,19 @@ class TreatmentScreen extends StatelessWidget {
 
                 const SizedBox(width: 10),
 
-                /// EXPORT PDF
+                /// EXPORT
                 Expanded(
                   child: ElevatedButton.icon(
                     icon: const Icon(Icons.picture_as_pdf),
                     label: const Text("Export PDF"),
-                    onPressed: () => _exportPdf(context),
+                    onPressed: () async {
+                      try {
+                        await _saveDetectionIfNeeded(); // 🔥 AUTO SAVE
+                        await _reportService.exportReport(_toResult());
+                      } catch (e) {
+                        ErrorDialog.show(context, "Failed to export PDF");
+                      }
+                    },
                   ),
                 ),
               ],
@@ -145,148 +181,5 @@ class TreatmentScreen extends StatelessWidget {
         ),
       ),
     );
-  }
-
-  /// ================= PDF GENERATOR =================
-  Future<File> _generatePdf() async {
-    final pdf = pw.Document();
-
-    final imageBytes = await imageFile.readAsBytes();
-    final logoBytes =
-        (await rootBundle.load('assets/logo_1.png')).buffer.asUint8List();
-
-    final now = DateTime.now();
-
-    final isHealthy =
-        detection.className.toLowerCase().contains("healthy");
-
-    pdf.addPage(
-      pw.Page(
-        margin: const pw.EdgeInsets.all(24),
-        build: (_) => pw.Column(
-          crossAxisAlignment: pw.CrossAxisAlignment.start,
-          children: [
-
-            /// HEADER
-            pw.Row(
-              mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
-              children: [
-                pw.Image(pw.MemoryImage(logoBytes), height: 40),
-                pw.Text("AgriCare Report",
-                    style: pw.TextStyle(
-                        fontSize: 18,
-                        fontWeight: pw.FontWeight.bold)),
-              ],
-            ),
-
-            pw.SizedBox(height: 20),
-
-            pw.Image(pw.MemoryImage(imageBytes), height: 200),
-
-            pw.SizedBox(height: 20),
-
-            pw.Text("Disease: ${detection.className}",
-                style: pw.TextStyle(fontWeight: pw.FontWeight.bold)),
-
-            pw.Text(
-                "Confidence: ${(detection.confidence * 100).toStringAsFixed(1)}%"),
-
-            pw.Text("Date: ${now.day}/${now.month}/${now.year}"),
-
-            pw.SizedBox(height: 10),
-
-            pw.Text(
-              isHealthy ? "Healthy" : "Diseased",
-              style: pw.TextStyle(
-                color: isHealthy ? PdfColors.green : PdfColors.red,
-                fontWeight: pw.FontWeight.bold,
-              ),
-            ),
-
-            pw.SizedBox(height: 20),
-
-            /// SYMPTOMS
-            pw.Text("Symptoms",
-                style: pw.TextStyle(fontWeight: pw.FontWeight.bold)),
-            pw.SizedBox(height: 6),
-            pw.Text(detection.symptoms),
-
-            pw.SizedBox(height: 20),
-
-            /// CAUSE
-            pw.Text("Cause",
-                style: pw.TextStyle(fontWeight: pw.FontWeight.bold)),
-            pw.SizedBox(height: 6),
-            pw.Text(detection.cause),
-
-            pw.SizedBox(height: 20),
-
-            /// TREATMENT
-            pw.Text("Treatment",
-                style: pw.TextStyle(fontWeight: pw.FontWeight.bold)),
-            pw.SizedBox(height: 6),
-            pw.Text(detection.recommendation),
-          ],
-        ),
-      ),
-    );
-
-    final dir = await _getDownloadDirectory();
-
-    final cleanDisease = detection.className
-        .replaceAll(" ", "_")
-        .replaceAll(RegExp(r'[^\w\s]+'), '');
-
-    final file = await _createUniqueFile(
-      dir.path,
-      "AgriCare_Report_$cleanDisease",
-    );
-
-    await file.writeAsBytes(await pdf.save());
-
-    return file;
-  }
-
-  /// ================= EXPORT =================
-  Future<void> _exportPdf(BuildContext context) async {
-    try {
-      final file = await _generatePdf();
-
-      SuccessDialog.show(
-        context,
-        "PDF saved successfully",
-        onContinue: () async {
-          await OpenFilex.open(file.path);
-        },
-      );
-    } catch (e) {
-      ErrorDialog.show(
-        context,
-        "Failed to export PDF",
-      );
-    }
-  }
-
-  /// ================= DOWNLOAD DIRECTORY =================
-  Future<Directory> _getDownloadDirectory() async {
-    if (Platform.isAndroid) {
-      final dir = Directory('/storage/emulated/0/Download');
-      if (await dir.exists()) return dir;
-    }
-    return await getApplicationDocumentsDirectory();
-  }
-
-  /// ================= UNIQUE FILE =================
-  Future<File> _createUniqueFile(String dirPath, String baseName) async {
-    int counter = 0;
-    String path;
-
-    do {
-      final suffix = counter == 0 ? "" : "($counter)";
-      path = "$dirPath/$baseName$suffix.pdf";
-      counter++;
-    } while (await File(path).exists());
-
-    return File(path);
   }
 }

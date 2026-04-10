@@ -21,10 +21,6 @@ class ProfileScreen extends StatelessWidget {
           child: Column(
             children: [
 
-              /// 👇 THIS PUSHES CONTENT TO CENTER
-              const Spacer(),
-
-              /// 🔥 PROFILE CARD
               Container(
                 width: double.infinity,
                 padding: const EdgeInsets.symmetric(vertical: 30),
@@ -34,8 +30,6 @@ class ProfileScreen extends StatelessWidget {
                 ),
                 child: Column(
                   children: [
-
-                    /// 👤 AVATAR
                     Container(
                       padding: const EdgeInsets.all(18),
                       decoration: BoxDecoration(
@@ -50,8 +44,6 @@ class ProfileScreen extends StatelessWidget {
                     ),
 
                     const SizedBox(height: 16),
-
-                    /// USERNAME
                     Text(
                       user?.username ?? "No user",
                       style: theme.textTheme.titleLarge,
@@ -70,9 +62,9 @@ class ProfileScreen extends StatelessWidget {
 
               const SizedBox(height: 30),
 
-              /// 🚪 LOGOUT BUTTON
+              /// LOGOUT BUTTON
               SizedBox(
-                width: double.infinity,
+                width: 200,
                 height: 50,
                 child: ElevatedButton.icon(
                   onPressed: () {
@@ -95,9 +87,6 @@ class ProfileScreen extends StatelessWidget {
                   ),
                 ),
               ),
-
-              /// 👇 PUSHES EVERYTHING NICELY CENTERED
-              const Spacer(),
             ],
           ),
         ),
