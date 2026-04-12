@@ -18,8 +18,7 @@ It integrates a FastAPI backend with a Flutter mobile application to provide rea
 
 ### 1. Clone the Repository
 ```bash
-git clone https://github.com/tashil99/agricare.git
-cd agricare
+git clone https://github.com/tashil99/AgriCare.git
 ```
 
 ### 2. Run the Backend (FastAPI)
