@@ -1,4 +1,4 @@
-# AgriCare - A Tomato Disease Detection App powered by YOLO with AI-based Remedy Recommendation
+# AgriCare - A Tomato Disease Detection App with AI-Based Remedy Recommendation
 
 ## Description
 AgriCare is an AI-based system that detects tomato leaf diseases using a YOLO deep learning model.  
