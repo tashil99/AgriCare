@@ -1,4 +1,4 @@
-# AgriCare - AI Crop Disease Detection
+# AgriCare - A Tomato Disease Detection App powered by YOLO with AI-based Remedy Recommendation
 
 ## Description
 AgriCare is an AI-based system that detects tomato leaf diseases using a YOLO deep learning model.  
@@ -18,7 +18,7 @@ It integrates a FastAPI backend with a Flutter mobile application to provide rea
 
 ### 1. Clone the Repository
 ```bash
-git clone https://github.com/your-username/agricare.git
+git clone https://github.com/tashil99/agricare.git
 cd agricare
 ```
 
